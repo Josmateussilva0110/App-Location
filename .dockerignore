@@ -1,0 +1,22 @@
+# Node
+**/node_modules
+**/.expo
+
+# Android build artifacts
+**/android/.gradle
+**/android/build
+**/android/app/build
+
+# Git
+.git
+
+# Build output
+build/
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
