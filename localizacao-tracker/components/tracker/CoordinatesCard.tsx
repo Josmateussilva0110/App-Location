@@ -6,9 +6,16 @@ import { trackerColors } from "@/constants/trackerTheme";
 type CoordinatesCardProps = {
   latitude: number | null;
   longitude: number | null;
+  city: string;
+  state: string;
 };
 
-export function CoordinatesCard({ latitude, longitude }: CoordinatesCardProps) {
+export function CoordinatesCard({
+  latitude,
+  longitude,
+  city,
+  state,
+}: CoordinatesCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -35,6 +42,15 @@ export function CoordinatesCard({ latitude, longitude }: CoordinatesCardProps) {
           </Text>
         </View>
       </View>
+
+      {(city || state) && (
+        <View style={styles.addressRow}>
+          <Text style={styles.label}>Local</Text>
+          <Text style={styles.addressValue}>
+            {[city, state].filter(Boolean).join(" — ")}
+          </Text>
+        </View>
+      )}
 
       {latitude === null && (
         <Text style={styles.hint}>
@@ -96,6 +112,17 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: trackerColors.text,
     fontVariant: ["tabular-nums"],
+  },
+  addressRow: {
+    marginTop: 16,
+    alignItems: "center",
+    gap: 4,
+  },
+  addressValue: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: trackerColors.text,
+    textAlign: "center",
   },
   hint: {
     fontSize: 12,

@@ -2,41 +2,39 @@ import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { AlertTriangle, Satellite, WifiOff } from "lucide-react-native";
 
-import {
-  type EstadoSincronizacao,
-} from "@/constants/location";
+import { type SyncStatus } from "@/constants/location";
 import { trackerColors } from "@/constants/trackerTheme";
 
 type SyncActivityCardProps = {
-  rastreando: boolean;
-  jaEnviou: boolean;
-  acabouDeEnviar: boolean;
-  estado: EstadoSincronizacao;
+  isTracking: boolean;
+  hasSent: boolean;
+  justSent: boolean;
+  syncStatus: SyncStatus;
 };
 
-const CONTEUDO_ESTADO: Record<
-  EstadoSincronizacao,
-  { titulo: string; subtitulo: string; badge: string }
+const STATUS_CONTENT: Record<
+  SyncStatus,
+  { title: string; subtitle: string; badge: string }
 > = {
-  ao_vivo: {
-    titulo: "Sincronização ativa",
-    subtitulo: "Suas localizações estão sendo enviadas em segundo plano.",
+  live: {
+    title: "Sincronização ativa",
+    subtitle: "Suas localizações estão sendo enviadas em segundo plano.",
     badge: "AO VIVO",
   },
-  aguardando: {
-    titulo: "Sincronização ativa",
-    subtitulo: "Aguardando a primeira localização para enviar.",
+  waiting: {
+    title: "Sincronização ativa",
+    subtitle: "Aguardando a primeira localização para enviar.",
     badge: "AGUARDANDO",
   },
   offline: {
-    titulo: "Sem conexão",
-    subtitulo:
+    title: "Sem conexão",
+    subtitle:
       "A internet está indisponível. As localizações serão enviadas quando a rede voltar.",
     badge: "OFFLINE",
   },
-  falha: {
-    titulo: "Falha na sincronização",
-    subtitulo:
+  failed: {
+    title: "Falha na sincronização",
+    subtitle:
       "Não foi possível enviar a última localização. Tentando novamente automaticamente.",
     badge: "ERRO",
   },
@@ -128,83 +126,83 @@ function LiveDots({ color }: { color: string }) {
   );
 }
 
-function SyncIcon({ estado }: { estado: EstadoSincronizacao }) {
-  const corIcone =
-    estado === "offline"
+function SyncIcon({ syncStatus }: { syncStatus: SyncStatus }) {
+  const iconColor =
+    syncStatus === "offline"
       ? trackerColors.inactiveText
-      : estado === "falha"
+      : syncStatus === "failed"
         ? "#f59e0b"
         : trackerColors.primary;
 
-  const fundoIcone =
-    estado === "offline"
+  const iconBackground =
+    syncStatus === "offline"
       ? "rgba(100, 116, 139, 0.2)"
-      : estado === "falha"
+      : syncStatus === "failed"
         ? "rgba(245, 158, 11, 0.15)"
         : "rgba(99, 102, 241, 0.15)";
 
   const Icon =
-    estado === "offline"
+    syncStatus === "offline"
       ? WifiOff
-      : estado === "falha"
+      : syncStatus === "failed"
         ? AlertTriangle
         : Satellite;
 
   return (
-    <View style={[styles.iconCircle, { backgroundColor: fundoIcone }]}>
-      <Icon size={26} color={corIcone} />
+    <View style={[styles.iconCircle, { backgroundColor: iconBackground }]}>
+      <Icon size={26} color={iconColor} />
     </View>
   );
 }
 
 export function SyncActivityCard({
-  rastreando,
-  jaEnviou,
-  acabouDeEnviar,
-  estado,
+  isTracking,
+  hasSent,
+  justSent,
+  syncStatus,
 }: SyncActivityCardProps) {
   const flashOpacity = useRef(new Animated.Value(0)).current;
-  const conteudo = CONTEUDO_ESTADO[estado];
-  const aoVivo = estado === "ao_vivo";
-  const aguardando = estado === "aguardando";
-  const animado = aoVivo || aguardando;
+  const content = STATUS_CONTENT[syncStatus];
+  const isLive = syncStatus === "live";
+  const isWaiting = syncStatus === "waiting";
+  const isAnimated = isLive || isWaiting;
 
-  const corPulse =
-    estado === "offline"
+  const pulseColor =
+    syncStatus === "offline"
       ? trackerColors.inactive
-      : estado === "falha"
+      : syncStatus === "failed"
         ? "#f59e0b"
         : trackerColors.primary;
 
   const badgeStyle =
-    estado === "offline"
+    syncStatus === "offline"
       ? styles.badgeOffline
-      : estado === "falha"
-        ? styles.badgeFalha
-        : aguardando
-          ? styles.badgeAguardando
-          : styles.badgeAoVivo;
+      : syncStatus === "failed"
+        ? styles.badgeFailed
+        : isWaiting
+          ? styles.badgeWaiting
+          : styles.badgeLive;
 
   const badgeTextStyle =
-    estado === "offline"
+    syncStatus === "offline"
       ? styles.badgeTextOffline
-      : estado === "falha"
-        ? styles.badgeTextFalha
-        : aguardando
-          ? styles.badgeTextAguardando
-          : styles.badgeTextAoVivo;
+      : syncStatus === "failed"
+        ? styles.badgeTextFailed
+        : isWaiting
+          ? styles.badgeTextWaiting
+          : styles.badgeTextLive;
 
   const badgeDotColor =
-    estado === "offline"
+    syncStatus === "offline"
       ? trackerColors.inactive
-      : estado === "falha"
+      : syncStatus === "failed"
         ? "#f59e0b"
-        : aguardando
+        : isWaiting
           ? trackerColors.primaryLight
           : trackerColors.success;
 
   useEffect(() => {
-    if (!acabouDeEnviar) return;
+    if (!justSent) return;
 
     Animated.sequence([
       Animated.timing(flashOpacity, {
@@ -218,17 +216,17 @@ export function SyncActivityCard({
         useNativeDriver: true,
       }),
     ]).start();
-  }, [acabouDeEnviar, flashOpacity]);
+  }, [justSent, flashOpacity]);
 
-  if (!rastreando) return null;
+  if (!isTracking) return null;
 
   return (
     <View
       style={[
         styles.card,
-        aoVivo && acabouDeEnviar && styles.cardFlash,
-        estado === "offline" && styles.cardOffline,
-        estado === "falha" && styles.cardFalha,
+        isLive && justSent && styles.cardFlash,
+        syncStatus === "offline" && styles.cardOffline,
+        syncStatus === "failed" && styles.cardFailed,
       ]}
     >
       <Animated.View
@@ -237,29 +235,29 @@ export function SyncActivityCard({
       />
 
       <View style={styles.iconArea}>
-        {animado && (
+        {isAnimated && (
           <>
-            <PulseRing delay={0} color={corPulse} />
-            <PulseRing delay={700} color={corPulse} />
+            <PulseRing delay={0} color={pulseColor} />
+            <PulseRing delay={700} color={pulseColor} />
           </>
         )}
-        <SyncIcon estado={estado} />
+        <SyncIcon syncStatus={syncStatus} />
       </View>
 
-      <Text style={styles.title}>{conteudo.titulo}</Text>
+      <Text style={styles.title}>{content.title}</Text>
       <Text style={styles.subtitle}>
-        {estado === "ao_vivo" && !jaEnviou
-          ? CONTEUDO_ESTADO.aguardando.subtitulo
-          : conteudo.subtitulo}
+        {syncStatus === "live" && !hasSent
+          ? STATUS_CONTENT.waiting.subtitle
+          : content.subtitle}
       </Text>
 
       <View style={[styles.liveBadge, badgeStyle]}>
-        {animado ? (
+        {isAnimated ? (
           <LiveDots color={badgeDotColor} />
         ) : (
           <View style={[styles.statusDot, { backgroundColor: badgeDotColor }]} />
         )}
-        <Text style={[styles.liveText, badgeTextStyle]}>{conteudo.badge}</Text>
+        <Text style={[styles.liveText, badgeTextStyle]}>{content.badge}</Text>
       </View>
     </View>
   );
@@ -283,7 +281,7 @@ const styles = StyleSheet.create({
   cardOffline: {
     borderColor: "rgba(100, 116, 139, 0.45)",
   },
-  cardFalha: {
+  cardFailed: {
     borderColor: "rgba(245, 158, 11, 0.45)",
   },
   flashOverlay: {
@@ -333,16 +331,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginTop: 4,
   },
-  badgeAoVivo: {
+  badgeLive: {
     backgroundColor: "rgba(34, 197, 94, 0.12)",
   },
-  badgeAguardando: {
+  badgeWaiting: {
     backgroundColor: "rgba(99, 102, 241, 0.12)",
   },
   badgeOffline: {
     backgroundColor: "rgba(100, 116, 139, 0.15)",
   },
-  badgeFalha: {
+  badgeFailed: {
     backgroundColor: "rgba(245, 158, 11, 0.12)",
   },
   liveText: {
@@ -350,16 +348,16 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 1.2,
   },
-  badgeTextAoVivo: {
+  badgeTextLive: {
     color: trackerColors.successLight,
   },
-  badgeTextAguardando: {
+  badgeTextWaiting: {
     color: trackerColors.primaryLight,
   },
   badgeTextOffline: {
     color: trackerColors.inactiveText,
   },
-  badgeTextFalha: {
+  badgeTextFailed: {
     color: "#fbbf24",
   },
   dotsRow: {

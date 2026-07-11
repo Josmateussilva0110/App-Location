@@ -4,36 +4,36 @@ import { Play, Square } from "lucide-react-native";
 import { trackerColors } from "@/constants/trackerTheme";
 
 type TrackingButtonsProps = {
-  rastreando: boolean;
-  onIniciar: () => void;
-  onParar: () => void;
+  isTracking: boolean;
+  onStart: () => void;
+  onStop: () => void;
 };
 
 export function TrackingButtons({
-  rastreando,
-  onIniciar,
-  onParar,
+  isTracking,
+  onStart,
+  onStop,
 }: TrackingButtonsProps) {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[styles.botao, styles.botaoIniciar, rastreando && styles.desabilitado]}
-        onPress={onIniciar}
-        disabled={rastreando}
+        style={[styles.button, styles.startButton, isTracking && styles.disabled]}
+        onPress={onStart}
+        disabled={isTracking}
         activeOpacity={0.7}
       >
         <Play size={20} color="#fff" fill="#fff" />
-        <Text style={styles.texto}>Iniciar</Text>
+        <Text style={styles.label}>Iniciar</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.botao, styles.botaoParar, !rastreando && styles.desabilitado]}
-        onPress={onParar}
-        disabled={!rastreando}
+        style={[styles.button, styles.stopButton, !isTracking && styles.disabled]}
+        onPress={onStop}
+        disabled={!isTracking}
         activeOpacity={0.7}
       >
         <Square size={20} color="#fff" fill="#fff" />
-        <Text style={styles.texto}>Parar</Text>
+        <Text style={styles.label}>Parar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 14,
   },
-  botao: {
+  button: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
@@ -53,16 +53,16 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 16,
   },
-  botaoIniciar: {
+  startButton: {
     backgroundColor: trackerColors.success,
   },
-  botaoParar: {
+  stopButton: {
     backgroundColor: trackerColors.danger,
   },
-  desabilitado: {
+  disabled: {
     opacity: 0.3,
   },
-  texto: {
+  label: {
     color: "#fff",
     fontWeight: "700",
     fontSize: 16,

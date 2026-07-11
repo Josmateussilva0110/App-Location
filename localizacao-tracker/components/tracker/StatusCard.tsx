@@ -4,22 +4,22 @@ import { Satellite, MapPinOff } from "lucide-react-native";
 import { trackerColors } from "@/constants/trackerTheme";
 
 type StatusCardProps = {
-  rastreando: boolean;
+  isTracking: boolean;
   status: string;
   pulseAnim: Animated.Value;
 };
 
-export function StatusCard({ rastreando, status, pulseAnim }: StatusCardProps) {
+export function StatusCard({ isTracking, status, pulseAnim }: StatusCardProps) {
   return (
     <View style={styles.card}>
       <Animated.View
         style={[
           styles.iconContainer,
-          rastreando ? styles.iconAtivo : styles.iconInativo,
+          isTracking ? styles.iconActive : styles.iconInactive,
           { transform: [{ scale: pulseAnim }] },
         ]}
       >
-        {rastreando ? (
+        {isTracking ? (
           <Satellite size={32} color="#fff" />
         ) : (
           <MapPinOff size={32} color="#fff" />
@@ -29,7 +29,7 @@ export function StatusCard({ rastreando, status, pulseAnim }: StatusCardProps) {
       <Text
         style={[
           styles.statusText,
-          rastreando ? styles.statusAtivo : styles.statusInativo,
+          isTracking ? styles.statusActive : styles.statusInactive,
         ]}
       >
         {status}
@@ -38,22 +38,22 @@ export function StatusCard({ rastreando, status, pulseAnim }: StatusCardProps) {
       <View
         style={[
           styles.badge,
-          rastreando ? styles.badgeAtivo : styles.badgeInativo,
+          isTracking ? styles.badgeActive : styles.badgeInactive,
         ]}
       >
         <View
           style={[
             styles.dot,
-            rastreando ? styles.dotAtivo : styles.dotInativo,
+            isTracking ? styles.dotActive : styles.dotInactive,
           ]}
         />
         <Text
           style={[
             styles.badgeText,
-            rastreando ? styles.badgeTextoAtivo : styles.badgeTextoInativo,
+            isTracking ? styles.badgeTextActive : styles.badgeTextInactive,
           ]}
         >
-          {rastreando ? "ATIVO" : "INATIVO"}
+          {isTracking ? "ATIVO" : "INATIVO"}
         </Text>
       </View>
     </View>
@@ -78,20 +78,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  iconAtivo: {
+  iconActive: {
     backgroundColor: trackerColors.success,
   },
-  iconInativo: {
+  iconInactive: {
     backgroundColor: trackerColors.inactive,
   },
   statusText: {
     fontSize: 20,
     fontWeight: "700",
   },
-  statusAtivo: {
+  statusActive: {
     color: trackerColors.successLight,
   },
-  statusInativo: {
+  statusInactive: {
     color: trackerColors.inactiveText,
   },
   badge: {
@@ -102,10 +102,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 20,
   },
-  badgeAtivo: {
+  badgeActive: {
     backgroundColor: "rgba(34, 197, 94, 0.15)",
   },
-  badgeInativo: {
+  badgeInactive: {
     backgroundColor: "rgba(100, 116, 139, 0.15)",
   },
   dot: {
@@ -113,10 +113,10 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
-  dotAtivo: {
+  dotActive: {
     backgroundColor: trackerColors.success,
   },
-  dotInativo: {
+  dotInactive: {
     backgroundColor: trackerColors.inactive,
   },
   badgeText: {
@@ -124,10 +124,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1.5,
   },
-  badgeTextoAtivo: {
+  badgeTextActive: {
     color: trackerColors.successLight,
   },
-  badgeTextoInativo: {
+  badgeTextInactive: {
     color: trackerColors.inactiveText,
   },
 });

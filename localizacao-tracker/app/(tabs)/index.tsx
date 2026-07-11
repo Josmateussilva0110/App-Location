@@ -15,42 +15,44 @@ import { useUserName } from "@/hooks/useUserName";
 
 export default function App() {
   const {
-    nomeUsuario,
-    nomeInput,
-    setNomeInput,
-    verificandoNome,
-    salvarNome,
+    userName,
+    nameInput,
+    setNameInput,
+    isCheckingName,
+    saveName,
   } = useUserName();
 
   const {
     status,
-    rastreando,
-    carregando,
+    isTracking,
+    isLoading,
     latitude,
     longitude,
-    iniciarRastreamento,
-    pararRastreamento,
+    city,
+    state,
+    startTracking,
+    stopTracking,
   } = useLocationTracking();
 
-  const syncStatus = useLocationSyncStatus(rastreando);
-  const pulseAnim = usePulseAnimation(rastreando);
+  const sync = useLocationSyncStatus(isTracking);
+  const pulseAnim = usePulseAnimation(isTracking);
   const fadeAnim = useFadeIn();
 
-  if (verificandoNome) {
+  if (isCheckingName) {
     return <LoadingScreen />;
   }
 
-  if (!nomeUsuario) {
+  if (!userName) {
     return (
       <NameSetupScreen
-        nomeInput={nomeInput}
-        onChangeNome={setNomeInput}
-        onConfirm={salvarNome}
+        nameInput={nameInput}
+        onChangeName={setNameInput}
+        onConfirm={saveName}
       />
     );
   }
 
-  if (carregando) {
+  if (isLoading) {
     return <LoadingScreen message="Carregando..." />;
   }
 
@@ -60,29 +62,34 @@ export default function App() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 32 }}
       >
-        <TrackerHeader nomeUsuario={nomeUsuario} />
+        <TrackerHeader userName={userName} />
 
         <StatusCard
-          rastreando={rastreando}
+          isTracking={isTracking}
           status={status}
           pulseAnim={pulseAnim}
         />
 
-        {rastreando && (
+        {isTracking && (
           <SyncActivityCard
-            rastreando={rastreando}
-            jaEnviou={syncStatus.jaEnviou}
-            acabouDeEnviar={syncStatus.acabouDeEnviar}
-            estado={syncStatus.estado}
+            isTracking={isTracking}
+            hasSent={sync.hasSent}
+            justSent={sync.justSent}
+            syncStatus={sync.syncStatus}
           />
         )}
 
-        <CoordinatesCard latitude={latitude} longitude={longitude} />
+        <CoordinatesCard
+          latitude={latitude}
+          longitude={longitude}
+          city={city}
+          state={state}
+        />
 
         <TrackingButtons
-          rastreando={rastreando}
-          onIniciar={iniciarRastreamento}
-          onParar={pararRastreamento}
+          isTracking={isTracking}
+          onStart={startTracking}
+          onStop={stopTracking}
         />
       </ScrollView>
     </Animated.View>
