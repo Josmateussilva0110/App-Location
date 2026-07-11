@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -6,7 +6,7 @@ import 'react-native-reanimated';
 
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { ToastProvider } from '@/contexts/ToastContext';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { trackerColors } from '@/constants/trackerTheme';
 
 import '@/services/backgroundLocationTask';
 
@@ -14,17 +14,27 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+const navTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: trackerColors.background,
+    card: trackerColors.background,
+    border: trackerColors.border,
+    primary: trackerColors.primary,
+    text: trackerColors.text,
+  },
+};
 
+export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ToastProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
+        <ThemeProvider value={navTheme}>
+          <Stack screenOptions={{ contentStyle: { backgroundColor: trackerColors.background } }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           </Stack>
-          <StatusBar style="auto" />
+          <StatusBar style="light" />
           <ToastContainer />
         </ThemeProvider>
       </ToastProvider>

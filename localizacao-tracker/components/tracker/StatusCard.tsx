@@ -1,7 +1,13 @@
 import { View, Text, Animated, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Satellite, MapPinOff } from "lucide-react-native";
 
-import { trackerColors } from "@/constants/trackerTheme";
+import {
+  trackerColors,
+  trackerGradients,
+  trackerRadius,
+  trackerShadow,
+} from "@/constants/trackerTheme";
 
 type StatusCardProps = {
   isTracking: boolean;
@@ -11,19 +17,34 @@ type StatusCardProps = {
 
 export function StatusCard({ isTracking, status, pulseAnim }: StatusCardProps) {
   return (
-    <View style={styles.card}>
+    <LinearGradient
+      colors={trackerGradients.hero}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.card}
+    >
       <Animated.View
-        style={[
-          styles.iconContainer,
-          isTracking ? styles.iconActive : styles.iconInactive,
-          { transform: [{ scale: pulseAnim }] },
-        ]}
+        style={[styles.iconWrap, { transform: [{ scale: pulseAnim }] }]}
       >
-        {isTracking ? (
-          <Satellite size={32} color="#fff" />
-        ) : (
-          <MapPinOff size={32} color="#fff" />
-        )}
+        <LinearGradient
+          colors={
+            isTracking
+              ? trackerGradients.success
+              : ["#3F3F49", "#2A2A32"]
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[
+            styles.iconCircle,
+            isTracking && trackerShadow.glowSuccess,
+          ]}
+        >
+          {isTracking ? (
+            <Satellite size={30} color="#fff" strokeWidth={2} />
+          ) : (
+            <MapPinOff size={30} color="#fff" strokeWidth={2} />
+          )}
+        </LinearGradient>
       </Animated.View>
 
       <Text
@@ -56,57 +77,63 @@ export function StatusCard({ isTracking, status, pulseAnim }: StatusCardProps) {
           {isTracking ? "ATIVO" : "INATIVO"}
         </Text>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: trackerColors.card,
-    borderRadius: 20,
-    padding: 28,
+    borderRadius: trackerRadius.xl,
+    paddingVertical: 32,
+    paddingHorizontal: 28,
     alignItems: "center",
-    gap: 16,
-    marginBottom: 20,
+    gap: 18,
+    marginBottom: 18,
     borderWidth: 1,
-    borderColor: trackerColors.border,
+    borderColor: trackerColors.borderSubtle,
+    ...trackerShadow.card,
   },
-  iconContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  iconWrap: {
+    width: 76,
+    height: 76,
     justifyContent: "center",
     alignItems: "center",
   },
-  iconActive: {
-    backgroundColor: trackerColors.success,
-  },
-  iconInactive: {
-    backgroundColor: trackerColors.inactive,
+  iconCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    justifyContent: "center",
+    alignItems: "center",
   },
   statusText: {
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: "700",
+    letterSpacing: -0.3,
+    textAlign: "center",
   },
   statusActive: {
-    color: trackerColors.successLight,
+    color: trackerColors.text,
   },
   statusInactive: {
-    color: trackerColors.inactiveText,
+    color: trackerColors.textMuted,
   },
   badge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
+    gap: 7,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: trackerRadius.pill,
+    borderWidth: 1,
   },
   badgeActive: {
-    backgroundColor: "rgba(34, 197, 94, 0.15)",
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    borderColor: "rgba(16, 185, 129, 0.3)",
   },
   badgeInactive: {
-    backgroundColor: "rgba(100, 116, 139, 0.15)",
+    backgroundColor: "rgba(138, 138, 150, 0.1)",
+    borderColor: "rgba(138, 138, 150, 0.22)",
   },
   dot: {
     width: 8,
@@ -114,15 +141,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   dotActive: {
-    backgroundColor: trackerColors.success,
+    backgroundColor: trackerColors.successLight,
   },
   dotInactive: {
-    backgroundColor: trackerColors.inactive,
+    backgroundColor: trackerColors.inactiveText,
   },
   badgeText: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1.5,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.6,
   },
   badgeTextActive: {
     color: trackerColors.successLight,

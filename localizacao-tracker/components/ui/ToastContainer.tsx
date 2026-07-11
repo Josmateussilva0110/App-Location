@@ -14,22 +14,25 @@ import { useToast, type Toast, type ToastType } from "@/contexts/ToastContext";
 
 const toastStyles: Record<
   ToastType,
-  { bg: string; border: string; icon: string }
+  { bg: string; border: string; icon: string; accent: string }
 > = {
   success: {
-    bg: "rgba(34, 197, 94, 0.15)",
-    border: "rgba(34, 197, 94, 0.4)",
+    bg: "rgba(16, 185, 129, 0.14)",
+    border: "rgba(16, 185, 129, 0.4)",
     icon: trackerColors.successLight,
+    accent: trackerColors.successLight,
   },
   error: {
-    bg: "rgba(239, 68, 68, 0.15)",
+    bg: "rgba(239, 68, 68, 0.14)",
     border: "rgba(239, 68, 68, 0.4)",
-    icon: trackerColors.danger,
+    icon: trackerColors.dangerLight,
+    accent: trackerColors.dangerLight,
   },
   info: {
-    bg: "rgba(99, 102, 241, 0.15)",
+    bg: "rgba(99, 102, 241, 0.14)",
     border: "rgba(99, 102, 241, 0.4)",
     icon: trackerColors.primaryLight,
+    accent: trackerColors.primaryLight,
   },
 };
 
@@ -86,6 +89,7 @@ function ToastItem({
         },
       ]}
     >
+      <View style={[styles.accentBar, { backgroundColor: style.accent }]} />
       <ToastIcon type={toast.type} />
       <Text style={styles.message} numberOfLines={3}>
         {toast.message}
@@ -130,16 +134,27 @@ const styles = StyleSheet.create({
   toast: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 14,
+    gap: 11,
+    paddingVertical: 13,
+    paddingLeft: 18,
+    paddingRight: 14,
+    borderRadius: 16,
     borderWidth: 1,
+    overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  accentBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
   },
   message: {
     flex: 1,

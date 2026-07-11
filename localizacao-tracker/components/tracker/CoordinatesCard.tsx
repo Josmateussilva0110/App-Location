@@ -1,7 +1,11 @@
 import { View, Text, StyleSheet } from "react-native";
-import { MapPin } from "lucide-react-native";
+import { MapPin, Globe } from "lucide-react-native";
 
-import { trackerColors } from "@/constants/trackerTheme";
+import {
+  trackerColors,
+  trackerRadius,
+  trackerShadow,
+} from "@/constants/trackerTheme";
 
 type CoordinatesCardProps = {
   latitude: number | null;
@@ -16,14 +20,16 @@ export function CoordinatesCard({
   city,
   state,
 }: CoordinatesCardProps) {
+  const location = [city, state].filter(Boolean).join(", ");
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <MapPin size={20} color={trackerColors.primary} />
-        <Text style={styles.title}>Coordenadas Atuais</Text>
+        <View style={styles.headerIcon}>
+          <MapPin size={16} color={trackerColors.primaryLight} strokeWidth={2.5} />
+        </View>
+        <Text style={styles.title}>Coordenadas atuais</Text>
       </View>
-
-      <View style={styles.divider} />
 
       <View style={styles.grid}>
         <View style={styles.item}>
@@ -43,19 +49,17 @@ export function CoordinatesCard({
         </View>
       </View>
 
-      {(city || state) && (
+      {location ? (
         <View style={styles.addressRow}>
-          <Text style={styles.label}>Local</Text>
-          <Text style={styles.addressValue}>
-            {[city, state].filter(Boolean).join(" — ")}
+          <Globe size={15} color={trackerColors.textMuted} strokeWidth={2} />
+          <Text style={styles.addressValue} numberOfLines={1}>
+            {location}
           </Text>
         </View>
-      )}
+      ) : null}
 
       {latitude === null && (
-        <Text style={styles.hint}>
-          Aguardando permissão de localização...
-        </Text>
+        <Text style={styles.hint}>Aguardando permissão de localização…</Text>
       )}
     </View>
   );
@@ -64,27 +68,32 @@ export function CoordinatesCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: trackerColors.card,
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 28,
+    borderRadius: trackerRadius.xl,
+    padding: 22,
+    marginBottom: 24,
     borderWidth: 1,
     borderColor: trackerColors.border,
+    ...trackerShadow.card,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
+    gap: 10,
+    marginBottom: 20,
+  },
+  headerIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    backgroundColor: "rgba(99, 102, 241, 0.14)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   title: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "700",
     color: trackerColors.textMuted,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: trackerColors.border,
-    marginBottom: 16,
+    letterSpacing: 0.2,
   },
   grid: {
     flexDirection: "row",
@@ -93,42 +102,48 @@ const styles = StyleSheet.create({
   item: {
     flex: 1,
     alignItems: "center",
-    gap: 4,
+    gap: 6,
   },
   separator: {
     width: 1,
-    height: 40,
+    height: 44,
     backgroundColor: trackerColors.border,
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     color: trackerColors.primaryLight,
-    fontWeight: "600",
-    letterSpacing: 0.5,
+    fontWeight: "700",
+    letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   value: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: "700",
     color: trackerColors.text,
     fontVariant: ["tabular-nums"],
+    letterSpacing: -0.3,
   },
   addressRow: {
-    marginTop: 16,
+    flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 18,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: trackerColors.border,
   },
   addressValue: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
     color: trackerColors.text,
-    textAlign: "center",
+    letterSpacing: 0.2,
   },
   hint: {
-    fontSize: 12,
+    fontSize: 12.5,
     color: trackerColors.textSubtle,
     textAlign: "center",
-    marginTop: 12,
+    marginTop: 14,
     fontStyle: "italic",
   },
 });

@@ -1,7 +1,13 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Text, TouchableOpacity, StyleSheet, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Play, Square } from "lucide-react-native";
 
-import { trackerColors } from "@/constants/trackerTheme";
+import {
+  trackerColors,
+  trackerGradients,
+  trackerRadius,
+  trackerShadow,
+} from "@/constants/trackerTheme";
 
 type TrackingButtonsProps = {
   isTracking: boolean;
@@ -17,23 +23,51 @@ export function TrackingButtons({
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[styles.button, styles.startButton, isTracking && styles.disabled]}
+        style={styles.buttonWrap}
         onPress={onStart}
         disabled={isTracking}
-        activeOpacity={0.7}
+        activeOpacity={0.85}
       >
-        <Play size={20} color="#fff" fill="#fff" />
-        <Text style={styles.label}>Iniciar</Text>
+        {isTracking ? (
+          <View style={[styles.button, styles.disabledButton]}>
+            <Play size={19} color={trackerColors.textSubtle} fill={trackerColors.textSubtle} />
+            <Text style={[styles.label, styles.disabledLabel]}>Iniciar</Text>
+          </View>
+        ) : (
+          <LinearGradient
+            colors={trackerGradients.success}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.button, trackerShadow.glowSuccess]}
+          >
+            <Play size={19} color="#fff" fill="#fff" />
+            <Text style={styles.label}>Iniciar</Text>
+          </LinearGradient>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.button, styles.stopButton, !isTracking && styles.disabled]}
+        style={styles.buttonWrap}
         onPress={onStop}
         disabled={!isTracking}
-        activeOpacity={0.7}
+        activeOpacity={0.85}
       >
-        <Square size={20} color="#fff" fill="#fff" />
-        <Text style={styles.label}>Parar</Text>
+        {!isTracking ? (
+          <View style={[styles.button, styles.disabledButton]}>
+            <Square size={18} color={trackerColors.textSubtle} fill={trackerColors.textSubtle} />
+            <Text style={[styles.label, styles.disabledLabel]}>Parar</Text>
+          </View>
+        ) : (
+          <LinearGradient
+            colors={trackerGradients.danger}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.button}
+          >
+            <Square size={18} color="#fff" fill="#fff" />
+            <Text style={styles.label}>Parar</Text>
+          </LinearGradient>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -44,27 +78,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 14,
   },
-  button: {
+  buttonWrap: {
     flex: 1,
+    borderRadius: trackerRadius.md,
+  },
+  button: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    paddingVertical: 16,
-    borderRadius: 16,
+    paddingVertical: 17,
+    borderRadius: trackerRadius.md,
   },
-  startButton: {
-    backgroundColor: trackerColors.success,
-  },
-  stopButton: {
-    backgroundColor: trackerColors.danger,
-  },
-  disabled: {
-    opacity: 0.3,
+  disabledButton: {
+    backgroundColor: trackerColors.cardElevated,
+    borderWidth: 1,
+    borderColor: trackerColors.border,
   },
   label: {
     color: "#fff",
     fontWeight: "700",
     fontSize: 16,
+    letterSpacing: 0.2,
+  },
+  disabledLabel: {
+    color: trackerColors.textSubtle,
   },
 });

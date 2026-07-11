@@ -1,7 +1,21 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Navigation, User } from "lucide-react-native";
 
-import { trackerColors, trackerLayout } from "@/constants/trackerTheme";
+import {
+  trackerColors,
+  trackerGradients,
+  trackerLayout,
+  trackerRadius,
+  trackerShadow,
+} from "@/constants/trackerTheme";
 
 type NameSetupScreenProps = {
   nameInput: string;
@@ -14,19 +28,26 @@ export function NameSetupScreen({
   onChangeName,
   onConfirm,
 }: NameSetupScreenProps) {
+  const [focused, setFocused] = useState(false);
   const canConfirm = nameInput.trim().length > 0;
 
   return (
     <View style={trackerLayout.container}>
       <View style={styles.wrapper}>
         <View style={styles.card}>
-          <View style={styles.iconCircle}>
-            <User size={28} color={trackerColors.primary} />
-          </View>
+          <LinearGradient
+            colors={trackerGradients.brand}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.iconCircle}
+          >
+            <User size={28} color="#fff" strokeWidth={2.2} />
+          </LinearGradient>
 
           <Text style={styles.title}>Quem é você?</Text>
           <Text style={styles.subtitle}>
-            Informe seu nome para identificar suas localizações no rastreamento.
+            Informe seu nome para identificar suas localizações no
+            rastreamento.
           </Text>
 
           <TextInput
@@ -34,24 +55,39 @@ export function NameSetupScreen({
             onChangeText={onChangeName}
             placeholder="Digite seu nome"
             placeholderTextColor={trackerColors.textSubtle}
-            style={styles.input}
+            style={[styles.input, focused && styles.inputFocused]}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             autoFocus
             returnKeyType="done"
             onSubmitEditing={canConfirm ? onConfirm : undefined}
           />
 
           <TouchableOpacity
-            style={[styles.button, !canConfirm && styles.buttonDisabled]}
+            style={styles.buttonWrap}
             onPress={onConfirm}
             disabled={!canConfirm}
-            activeOpacity={0.7}
+            activeOpacity={0.85}
           >
-            <Text style={styles.buttonText}>Confirmar</Text>
+            {canConfirm ? (
+              <LinearGradient
+                colors={trackerGradients.brand}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[styles.button, trackerShadow.glow]}
+              >
+                <Text style={styles.buttonText}>Confirmar</Text>
+              </LinearGradient>
+            ) : (
+              <View style={[styles.button, styles.buttonDisabled]}>
+                <Text style={styles.buttonTextDisabled}>Confirmar</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
-          <Navigation size={16} color={trackerColors.primaryLight} />
+          <Navigation size={15} color={trackerColors.primaryLight} />
           <Text style={styles.footerText}>Rastreador de Localização</Text>
         </View>
       </View>
@@ -67,74 +103,89 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: trackerColors.card,
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: trackerRadius.xl,
+    padding: 28,
     borderWidth: 1,
     borderColor: trackerColors.border,
     alignItems: "center",
-    gap: 12,
+    gap: 14,
+    ...trackerShadow.card,
   },
   iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "rgba(99, 102, 241, 0.15)",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 4,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "700",
+    fontSize: 23,
+    fontWeight: "800",
     color: trackerColors.text,
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
   },
   subtitle: {
     fontSize: 14,
-    color: trackerColors.textSubtle,
+    color: trackerColors.textMuted,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 21,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: trackerColors.background,
-    borderWidth: 1,
+    backgroundColor: trackerColors.backgroundElevated,
+    borderWidth: 1.5,
     borderColor: trackerColors.border,
-    borderRadius: 12,
+    borderRadius: trackerRadius.sm,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     color: trackerColors.text,
     fontSize: 16,
+    fontWeight: "500",
     width: "100%",
   },
-  button: {
+  inputFocused: {
+    borderColor: trackerColors.primary,
+  },
+  buttonWrap: {
     alignSelf: "stretch",
+    marginTop: 4,
+    borderRadius: trackerRadius.sm,
+  },
+  button: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: trackerColors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginTop: 4,
+    paddingVertical: 15,
+    borderRadius: trackerRadius.sm,
   },
   buttonDisabled: {
-    opacity: 0.4,
+    backgroundColor: trackerColors.cardElevated,
+    borderWidth: 1,
+    borderColor: trackerColors.border,
   },
   buttonText: {
     color: "#fff",
-    fontWeight: "600",
-    fontSize: 15,
+    fontWeight: "700",
+    fontSize: 15.5,
+    letterSpacing: 0.3,
+  },
+  buttonTextDisabled: {
+    color: trackerColors.textSubtle,
+    fontWeight: "700",
+    fontSize: 15.5,
+    letterSpacing: 0.3,
   },
   footer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    marginTop: 24,
+    gap: 7,
+    marginTop: 26,
   },
   footerText: {
     fontSize: 13,
     color: trackerColors.primaryLight,
-    fontWeight: "500",
+    fontWeight: "600",
+    letterSpacing: 0.2,
   },
 });
