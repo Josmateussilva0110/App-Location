@@ -11,6 +11,7 @@ import { trackerLayout } from "@/constants/trackerTheme";
 import { useLocationSyncStatus } from "@/hooks/useLocationSyncStatus";
 import { useLocationTracking } from "@/hooks/useLocationTracking";
 import { useFadeIn, usePulseAnimation } from "@/hooks/usePulseAnimation";
+import { useDeviceId } from "@/hooks/useDeviceId";
 import { useUserName } from "@/hooks/useUserName";
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
   const sync = useLocationSyncStatus(isTracking);
   const pulseAnim = usePulseAnimation(isTracking);
   const fadeAnim = useFadeIn();
+  const deviceId = useDeviceId();
 
   if (isCheckingName) {
     return <LoadingScreen />;
@@ -68,7 +70,7 @@ export default function App() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 24, flexGrow: 1 }}
       >
-        <TrackerHeader userName={userName} />
+        <TrackerHeader userName={userName} deviceId={deviceId} />
 
         <StatusCard
           isTracking={isTracking}
