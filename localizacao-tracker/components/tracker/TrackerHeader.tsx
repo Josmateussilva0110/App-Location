@@ -4,16 +4,16 @@ import { Navigation } from "lucide-react-native";
 import { trackerColors } from "@/constants/trackerTheme";
 
 type TrackerHeaderProps = {
-  nomeUsuario: string;
+  userName: string;
 };
 
-export function TrackerHeader({ nomeUsuario }: TrackerHeaderProps) {
+export function TrackerHeader({ userName }: TrackerHeaderProps) {
   return (
     <View style={styles.header}>
       <Navigation size={28} color={trackerColors.primary} />
       <View>
         <Text style={styles.title}>Rastreador</Text>
-        <Text style={styles.subtitle}>{nomeUsuario}</Text>
+        <Text style={styles.subtitle}>{userName}</Text>
       </View>
     </View>
   );

@@ -4,17 +4,17 @@ import { Navigation, User } from "lucide-react-native";
 import { trackerColors, trackerLayout } from "@/constants/trackerTheme";
 
 type NameSetupScreenProps = {
-  nomeInput: string;
-  onChangeNome: (text: string) => void;
+  nameInput: string;
+  onChangeName: (text: string) => void;
   onConfirm: () => void;
 };
 
 export function NameSetupScreen({
-  nomeInput,
-  onChangeNome,
+  nameInput,
+  onChangeName,
   onConfirm,
 }: NameSetupScreenProps) {
-  const podeConfirmar = nomeInput.trim().length > 0;
+  const canConfirm = nameInput.trim().length > 0;
 
   return (
     <View style={trackerLayout.container}>
@@ -30,23 +30,23 @@ export function NameSetupScreen({
           </Text>
 
           <TextInput
-            value={nomeInput}
-            onChangeText={onChangeNome}
+            value={nameInput}
+            onChangeText={onChangeName}
             placeholder="Digite seu nome"
             placeholderTextColor={trackerColors.textSubtle}
             style={styles.input}
             autoFocus
             returnKeyType="done"
-            onSubmitEditing={podeConfirmar ? onConfirm : undefined}
+            onSubmitEditing={canConfirm ? onConfirm : undefined}
           />
 
           <TouchableOpacity
-            style={[styles.botao, !podeConfirmar && styles.botaoDesabilitado]}
+            style={[styles.button, !canConfirm && styles.buttonDisabled]}
             onPress={onConfirm}
-            disabled={!podeConfirmar}
+            disabled={!canConfirm}
             activeOpacity={0.7}
           >
-            <Text style={styles.botaoTexto}>Confirmar</Text>
+            <Text style={styles.buttonText}>Confirmar</Text>
           </TouchableOpacity>
         </View>
 
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     width: "100%",
   },
-  botao: {
+  button: {
     alignSelf: "stretch",
     alignItems: "center",
     justifyContent: "center",
@@ -117,10 +117,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 4,
   },
-  botaoDesabilitado: {
+  buttonDisabled: {
     opacity: 0.4,
   },
-  botaoTexto: {
+  buttonText: {
     color: "#fff",
     fontWeight: "600",
     fontSize: 15,

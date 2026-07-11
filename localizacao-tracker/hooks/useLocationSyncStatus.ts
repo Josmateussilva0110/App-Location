@@ -3,110 +3,113 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 
 import {
-  CHAVE_ULTIMA_FALHA,
-  CHAVE_ULTIMO_ENVIO,
-  type EstadoSincronizacao,
-  type UltimaFalhaInfo,
-  type UltimoEnvioInfo,
+  KEY_LAST_FAILURE,
+  KEY_LAST_SEND,
+  type LastFailureInfo,
+  type LastSendInfo,
+  type SyncStatus,
 } from "@/constants/location";
 
-function calcularEstado(
-  conectado: boolean,
-  jaEnviou: boolean,
-  ultimoEnvio: UltimoEnvioInfo | null,
-  ultimaFalha: UltimaFalhaInfo | null
-): EstadoSincronizacao {
-  if (!conectado) return "offline";
+function calculateSyncStatus(
+  isConnected: boolean,
+  hasSent: boolean,
+  lastSend: LastSendInfo | null,
+  lastFailure: LastFailureInfo | null
+): SyncStatus {
+  if (!isConnected) return "offline";
 
-  const falhaMaisRecente =
-    ultimaFalha &&
-    (!ultimoEnvio ||
-      new Date(ultimaFalha.timestamp) > new Date(ultimoEnvio.timestamp));
+  const isFailureMoreRecent =
+    lastFailure &&
+    (!lastSend ||
+      new Date(lastFailure.timestamp) > new Date(lastSend.timestamp));
 
-  if (falhaMaisRecente) return "falha";
-  if (jaEnviou) return "ao_vivo";
-  return "aguardando";
+  if (isFailureMoreRecent) return "failed";
+  if (hasSent) return "live";
+  return "waiting";
 }
 
-export function useLocationSyncStatus(rastreando: boolean) {
-  const [jaEnviou, setJaEnviou] = useState(false);
-  const [acabouDeEnviar, setAcabouDeEnviar] = useState(false);
-  const [conectado, setConectado] = useState(true);
-  const [estado, setEstado] = useState<EstadoSincronizacao>("aguardando");
-  const ultimoTimestampRef = useRef<string | null>(null);
-  const conectadoRef = useRef(true);
+export function useLocationSyncStatus(isTracking: boolean) {
+  const [hasSent, setHasSent] = useState(false);
+  const [justSent, setJustSent] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("waiting");
+  const lastTimestampRef = useRef<string | null>(null);
+  const isConnectedRef = useRef(true);
 
   useEffect(() => {
-    if (!rastreando) {
-      setJaEnviou(false);
-      setAcabouDeEnviar(false);
-      setConectado(true);
-      setEstado("aguardando");
-      ultimoTimestampRef.current = null;
-      conectadoRef.current = true;
+    if (!isTracking) {
+      setHasSent(false);
+      setJustSent(false);
+      setIsConnected(true);
+      setSyncStatus("waiting");
+      lastTimestampRef.current = null;
+      isConnectedRef.current = true;
       return;
     }
 
-    function atualizarConexao(online: boolean) {
-      conectadoRef.current = online;
-      setConectado(online);
+    function updateConnection(online: boolean) {
+      isConnectedRef.current = online;
+      setIsConnected(online);
     }
 
-    async function lerEstadoSync() {
-      const [rawEnvio, rawFalha] = await Promise.all([
-        AsyncStorage.getItem(CHAVE_ULTIMO_ENVIO),
-        AsyncStorage.getItem(CHAVE_ULTIMA_FALHA),
+    async function readSyncState() {
+      const [rawSend, rawFailure] = await Promise.all([
+        AsyncStorage.getItem(KEY_LAST_SEND),
+        AsyncStorage.getItem(KEY_LAST_FAILURE),
       ]);
 
-      const ultimoEnvio = rawEnvio
-        ? (JSON.parse(rawEnvio) as UltimoEnvioInfo)
+      const lastSend = rawSend ? (JSON.parse(rawSend) as LastSendInfo) : null;
+      const lastFailure = rawFailure
+        ? (JSON.parse(rawFailure) as LastFailureInfo)
         : null;
-      const ultimaFalha = rawFalha
-        ? (JSON.parse(rawFalha) as UltimaFalhaInfo)
-        : null;
-      const enviou = ultimoEnvio !== null;
+      const sent = lastSend !== null;
 
-      setJaEnviou(enviou);
-      setEstado(
-        calcularEstado(conectadoRef.current, enviou, ultimoEnvio, ultimaFalha)
+      setHasSent(sent);
+      setSyncStatus(
+        calculateSyncStatus(
+          isConnectedRef.current,
+          sent,
+          lastSend,
+          lastFailure
+        )
       );
 
       if (
-        ultimoEnvio &&
-        ultimoTimestampRef.current &&
-        ultimoTimestampRef.current !== ultimoEnvio.timestamp
+        lastSend &&
+        lastTimestampRef.current &&
+        lastTimestampRef.current !== lastSend.timestamp
       ) {
-        setAcabouDeEnviar(true);
-        setTimeout(() => setAcabouDeEnviar(false), 2000);
+        setJustSent(true);
+        setTimeout(() => setJustSent(false), 2000);
       }
 
-      if (ultimoEnvio) {
-        ultimoTimestampRef.current = ultimoEnvio.timestamp;
+      if (lastSend) {
+        lastTimestampRef.current = lastSend.timestamp;
       }
     }
 
     NetInfo.fetch().then((state) => {
       const online =
         state.isConnected === true && state.isInternetReachable !== false;
-      atualizarConexao(online);
-      lerEstadoSync();
+      updateConnection(online);
+      readSyncState();
     });
 
     const unsubscribeNet = NetInfo.addEventListener((state) => {
       const online =
         state.isConnected === true && state.isInternetReachable !== false;
-      atualizarConexao(online);
-      lerEstadoSync();
+      updateConnection(online);
+      readSyncState();
     });
 
-    lerEstadoSync();
-    const intervalo = setInterval(lerEstadoSync, 3000);
+    readSyncState();
+    const interval = setInterval(readSyncState, 3000);
 
     return () => {
       unsubscribeNet();
-      clearInterval(intervalo);
+      clearInterval(interval);
     };
-  }, [rastreando]);
+  }, [isTracking]);
 
-  return { jaEnviou, acabouDeEnviar, conectado, estado };
+  return { hasSent, justSent, isConnected, syncStatus };
 }
