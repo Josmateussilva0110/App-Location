@@ -1,30 +1,19 @@
-import { View, Text, StyleSheet } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Navigation } from "lucide-react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
 
 import {
   trackerColors,
-  trackerGradients,
   trackerRadius,
   trackerShadow,
 } from "@/constants/trackerTheme";
 
 type TrackerHeaderProps = {
   userName: string;
+  deviceId?: string | null;
 };
 
-export function TrackerHeader({ userName }: TrackerHeaderProps) {
+export function TrackerHeader({ userName, deviceId }: TrackerHeaderProps) {
   return (
     <View style={styles.header}>
-      <LinearGradient
-        colors={trackerGradients.brand}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.iconBadge}
-      >
-        <Navigation size={24} color="#fff" strokeWidth={2.5} />
-      </LinearGradient>
-
       <View style={styles.textGroup}>
         <Text style={styles.title}>Rastreador</Text>
         <View style={styles.userRow}>
@@ -33,6 +22,11 @@ export function TrackerHeader({ userName }: TrackerHeaderProps) {
             {userName}
           </Text>
         </View>
+        {deviceId ? (
+          <Text style={styles.deviceId} numberOfLines={1}>
+            ID: {deviceId}
+          </Text>
+        ) : null}
       </View>
     </View>
   );
@@ -79,5 +73,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: trackerColors.textMuted,
     letterSpacing: 0.2,
+  },
+  deviceId: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: trackerColors.textMuted,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    letterSpacing: 0.3,
+    marginTop: 3,
   },
 });
