@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -11,151 +11,168 @@ import {
 import { useToast } from "@/contexts/ToastContext";
 import { getCityState } from "@/services/reverseGeocode";
 import { sendLocationToSheet } from "@/services/locationSync";
+import { useLocationPermissions } from "@/hooks/useLocationPermissions";
+
+type Phase = "checking" | "idle" | "starting" | "active" | "error";
+type Coords = { latitude: number; longitude: number };
+type Address = { city: string; state: string };
+
+type State = {
+  phase: Phase;
+  statusMessage: string;
+  coords: Coords | null;
+  address: Address;
+  hasPermission: boolean;
+};
+
+type Action =
+  | { type: "READY"; running: boolean }
+  | { type: "PERMISSION"; granted: boolean }
+  | { type: "STATUS"; message: string }
+  | { type: "COORDS"; coords: Coords }
+  | { type: "ADDRESS"; address: Address }
+  | { type: "ACTIVE" }
+  | { type: "STOPPED" }
+  | { type: "ERROR"; message: string };
+
+const initialState: State = {
+  phase: "checking",
+  statusMessage: "Verificando estado...",
+  coords: null,
+  address: { city: "", state: "" },
+  hasPermission: false,
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "READY":
+      return action.running
+        ? { ...state, phase: "active", statusMessage: "Rastreamento ativo" }
+        : { ...state, phase: "idle", statusMessage: "Rastreamento parado" };
+    case "PERMISSION":
+      return { ...state, hasPermission: action.granted };
+    case "STATUS":
+      return { ...state, phase: "starting", statusMessage: action.message };
+    case "COORDS":
+      return { ...state, coords: action.coords };
+    case "ADDRESS":
+      return { ...state, address: action.address };
+    case "ACTIVE":
+      return { ...state, phase: "active", statusMessage: "Rastreamento ativo" };
+    case "STOPPED":
+      return { ...state, phase: "idle", statusMessage: "Rastreamento parado" };
+    case "ERROR":
+      return { ...state, phase: "error", statusMessage: action.message };
+    default:
+      return state;
+  }
+}
 
 export function useLocationTracking() {
   const { showToast } = useToast();
-  const [status, setStatus] = useState("Verificando estado...");
-  const [isTracking, setIsTracking] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const { ensureForeground, ensureBackground } = useLocationPermissions();
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  async function updateAddress(lat: number, lon: number) {
-    const address = await getCityState(lat, lon);
-    setCity(address.city);
-    setState(address.state);
-  }
-
-  async function readCurrentCoordinates() {
-    const { status: fgStatus } =
-      await Location.requestForegroundPermissionsAsync();
-    if (fgStatus !== "granted") {
-      setHasLocationPermission(false);
-      return null;
-    }
-
-    setHasLocationPermission(true);
+  async function readCurrentCoordinates(): Promise<Coords | null> {
+    const granted = await ensureForeground();
+    dispatch({ type: "PERMISSION", granted });
+    if (!granted) return null;
 
     const loc = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.Balanced,
     });
+    return { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+  }
 
-    return {
-      latitude: loc.coords.latitude,
-      longitude: loc.coords.longitude,
-    };
+  async function refreshCoordinates() {
+    const coords = await readCurrentCoordinates();
+    if (!coords) return;
+    dispatch({ type: "COORDS", coords });
+    const address = await getCityState(coords.latitude, coords.longitude);
+    dispatch({ type: "ADDRESS", address });
   }
 
   useEffect(() => {
-    checkCurrentState();
-    loadInitialLocation();
+    (async () => {
+      const running = await Location.hasStartedLocationUpdatesAsync(
+        LOCATION_TASK_NAME
+      );
+      dispatch({ type: "READY", running });
+    })();
+
+    refreshCoordinates().catch(() => {
+      // silencioso
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
+    if (state.phase !== "active" || !state.hasPermission) return;
 
-    if (isTracking && hasLocationPermission) {
-      interval = setInterval(async () => {
-        try {
-          const coords = await readCurrentCoordinates();
-          if (!coords) return;
+    const interval = setInterval(() => {
+      refreshCoordinates().catch(() => {
+        // silencioso
+      });
+    }, 10000);
 
-          setLatitude(coords.latitude);
-          setLongitude(coords.longitude);
-          await updateAddress(coords.latitude, coords.longitude);
-        } catch {
-          // silent
-        }
-      }, 10000);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isTracking, hasLocationPermission]);
-
-  async function loadInitialLocation() {
-    try {
-      const coords = await readCurrentCoordinates();
-      if (!coords) return;
-
-      setLatitude(coords.latitude);
-      setLongitude(coords.longitude);
-      await updateAddress(coords.latitude, coords.longitude);
-    } catch (e) {
-      console.error("Error getting current location:", e);
-    }
-  }
-
-  async function checkCurrentState() {
-    const isRunning = await Location.hasStartedLocationUpdatesAsync(
-      LOCATION_TASK_NAME
-    );
-    setIsTracking(isRunning);
-    setStatus(isRunning ? "Rastreamento ativo" : "Rastreamento parado");
-    setIsLoading(false);
-  }
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.phase, state.hasPermission]);
 
   async function startTracking() {
     try {
-      const { status: fgStatus } =
-        await Location.requestForegroundPermissionsAsync();
-      if (fgStatus !== "granted") {
-        const msg = "Permissão em primeiro plano negada";
-        setStatus(msg);
+      if (!(await ensureForeground())) {
+        const msg = "Permissao em primeiro plano negada";
+        dispatch({ type: "ERROR", message: msg });
+        showToast(msg, "error");
+        return;
+      }
+      if (!(await ensureBackground())) {
+        const msg = "Permissao em segundo plano negada";
+        dispatch({ type: "ERROR", message: msg });
         showToast(msg, "error");
         return;
       }
 
-      const { status: bgStatus } =
-        await Location.requestBackgroundPermissionsAsync();
-      if (bgStatus !== "granted") {
-        const msg = "Permissão em segundo plano negada";
-        setStatus(msg);
+      dispatch({ type: "PERMISSION", granted: true });
+      dispatch({ type: "STATUS", message: "Obtendo localizacao..." });
+
+      const coords = await readCurrentCoordinates();
+      if (!coords) {
+        const msg = "Nao foi possivel obter a localizacao";
+        dispatch({ type: "ERROR", message: msg });
         showToast(msg, "error");
         return;
       }
 
-      setHasLocationPermission(true);
-      setStatus("Obtendo localização...");
+      dispatch({ type: "COORDS", coords });
+      getCityState(coords.latitude, coords.longitude).then((address) =>
+        dispatch({ type: "ADDRESS", address })
+      );
 
-      const currentCoords = await readCurrentCoordinates();
-      if (!currentCoords) {
-        const msg = "Não foi possível obter a localização";
-        setStatus(msg);
-        showToast(msg, "error");
-        return;
-      }
-
-      setLatitude(currentCoords.latitude);
-      setLongitude(currentCoords.longitude);
-      updateAddress(currentCoords.latitude, currentCoords.longitude);
-
-      setStatus("Enviando localização...");
+      dispatch({ type: "STATUS", message: "Enviando localizacao..." });
 
       try {
         const result = await sendLocationToSheet(
-          currentCoords.latitude,
-          currentCoords.longitude,
+          coords.latitude,
+          coords.longitude,
           { force: true }
         );
 
         if (result.status === "ok") {
-          showToast("Localização enviada com sucesso", "success");
+          showToast("Localizacao enviada com sucesso", "success");
         } else if (result.status === "ignored") {
-          showToast(
-            "Posição já registrada",
-            "info"
-          );
+          showToast("Posicao ja registrada", "info");
         } else {
-          showToast(result.error ?? "Erro ao enviar para a planilha", "error");
+          const msg = result.error ?? "Erro ao enviar para a planilha";
+          dispatch({ type: "ERROR", message: msg });
+          showToast(msg, "error");
           return;
         }
       } catch {
-        showToast("Erro ao enviar para a planilha", "error");
+        const msg = "Erro ao enviar para a planilha";
+        dispatch({ type: "ERROR", message: msg });
+        showToast(msg, "error");
         return;
       }
 
@@ -166,53 +183,51 @@ export function useLocationTracking() {
         showsBackgroundLocationIndicator: true,
         foregroundService: {
           notificationTitle: "Rastreamento ativo",
-          notificationBody: "Monitorando localização em segundo plano.",
+          notificationBody: "Monitorando localizacao em segundo plano.",
         },
       });
 
-      setIsTracking(true);
-      setStatus("Rastreamento ativo");
-    } catch (e) {
-      console.error("Error starting tracking:", e);
+      dispatch({ type: "ACTIVE" });
+    } catch {
       const msg = "Erro ao iniciar rastreamento";
-      setStatus(msg);
+      dispatch({ type: "ERROR", message: msg });
       showToast(msg, "error");
     }
   }
 
   async function stopTracking() {
     try {
-      const isRunning = await Location.hasStartedLocationUpdatesAsync(
+      const running = await Location.hasStartedLocationUpdatesAsync(
         LOCATION_TASK_NAME
       );
-      if (isRunning) {
+      if (running) {
         await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
       }
 
-      await AsyncStorage.removeItem(KEY_LAST_LOCATION);
-      await AsyncStorage.removeItem(KEY_LAST_SEND);
-      await AsyncStorage.removeItem(KEY_LAST_FAILURE);
+      await AsyncStorage.multiRemove([
+        KEY_LAST_LOCATION,
+        KEY_LAST_SEND,
+        KEY_LAST_FAILURE,
+      ]);
 
-      setIsTracking(false);
-      setStatus("Rastreamento parado");
+      dispatch({ type: "STOPPED" });
       showToast("Rastreamento parado", "info");
-    } catch (e) {
-      console.error("Error stopping tracking:", e);
+    } catch {
       const msg = "Erro ao parar rastreamento";
-      setStatus(msg);
+      dispatch({ type: "ERROR", message: msg });
       showToast(msg, "error");
     }
   }
 
   return {
-    status,
-    isTracking,
-    isLoading,
-    latitude,
-    longitude,
-    city,
-    state,
-    hasLocationPermission,
+    status: state.statusMessage,
+    isTracking: state.phase === "active",
+    isLoading: state.phase === "checking",
+    latitude: state.coords?.latitude ?? null,
+    longitude: state.coords?.longitude ?? null,
+    city: state.address.city,
+    state: state.address.state,
+    hasLocationPermission: state.hasPermission,
     startTracking,
     stopTracking,
   };

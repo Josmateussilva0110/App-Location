@@ -23,8 +23,7 @@ export async function getCityState(
     const state = address.region ?? "";
 
     return { city, state };
-  } catch (e) {
-    console.error("Reverse geocoding error:", e);
+  } catch {
     return { city: "", state: "" };
   }
 }
