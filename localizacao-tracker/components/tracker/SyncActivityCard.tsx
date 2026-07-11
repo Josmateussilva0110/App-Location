@@ -1,9 +1,15 @@
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { AlertTriangle, Satellite, WifiOff } from "lucide-react-native";
 
 import { type SyncStatus } from "@/constants/location";
-import { trackerColors } from "@/constants/trackerTheme";
+import {
+  trackerColors,
+  trackerGradients,
+  trackerRadius,
+  trackerShadow,
+} from "@/constants/trackerTheme";
 
 type SyncActivityCardProps = {
   isTracking: boolean;
@@ -40,13 +46,7 @@ const STATUS_CONTENT: Record<
   },
 };
 
-function PulseRing({
-  delay,
-  color,
-}: {
-  delay: number;
-  color: string;
-}) {
+function PulseRing({ delay, color }: { delay: number; color: string }) {
   const scale = useRef(new Animated.Value(0.8)).current;
   const opacity = useRef(new Animated.Value(0.5)).current;
 
@@ -131,15 +131,15 @@ function SyncIcon({ syncStatus }: { syncStatus: SyncStatus }) {
     syncStatus === "offline"
       ? trackerColors.inactiveText
       : syncStatus === "failed"
-        ? "#f59e0b"
-        : trackerColors.primary;
+        ? trackerColors.warningLight
+        : trackerColors.primaryLight;
 
   const iconBackground =
     syncStatus === "offline"
-      ? "rgba(100, 116, 139, 0.2)"
+      ? "rgba(138, 138, 150, 0.16)"
       : syncStatus === "failed"
         ? "rgba(245, 158, 11, 0.15)"
-        : "rgba(99, 102, 241, 0.15)";
+        : "rgba(99, 102, 241, 0.16)";
 
   const Icon =
     syncStatus === "offline"
@@ -150,7 +150,7 @@ function SyncIcon({ syncStatus }: { syncStatus: SyncStatus }) {
 
   return (
     <View style={[styles.iconCircle, { backgroundColor: iconBackground }]}>
-      <Icon size={26} color={iconColor} />
+      <Icon size={26} color={iconColor} strokeWidth={2} />
     </View>
   );
 }
@@ -171,7 +171,7 @@ export function SyncActivityCard({
     syncStatus === "offline"
       ? trackerColors.inactive
       : syncStatus === "failed"
-        ? "#f59e0b"
+        ? trackerColors.warning
         : trackerColors.primary;
 
   const badgeStyle =
@@ -196,10 +196,10 @@ export function SyncActivityCard({
     syncStatus === "offline"
       ? trackerColors.inactive
       : syncStatus === "failed"
-        ? "#f59e0b"
+        ? trackerColors.warning
         : isWaiting
           ? trackerColors.primaryLight
-          : trackerColors.success;
+          : trackerColors.successLight;
 
   useEffect(() => {
     if (!justSent) return;
@@ -221,12 +221,15 @@ export function SyncActivityCard({
   if (!isTracking) return null;
 
   return (
-    <View
+    <LinearGradient
+      colors={trackerGradients.surface}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
       style={[
         styles.card,
-        isLive && justSent && styles.cardFlash,
         syncStatus === "offline" && styles.cardOffline,
         syncStatus === "failed" && styles.cardFailed,
+        isLive && justSent && styles.cardFlash,
       ]}
     >
       <Animated.View
@@ -259,34 +262,34 @@ export function SyncActivityCard({
         )}
         <Text style={[styles.liveText, badgeTextStyle]}>{content.badge}</Text>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: trackerColors.card,
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 20,
+    borderRadius: trackerRadius.xl,
+    padding: 26,
+    marginBottom: 18,
     borderWidth: 1,
-    borderColor: trackerColors.border,
+    borderColor: trackerColors.borderSubtle,
     alignItems: "center",
-    gap: 8,
+    gap: 10,
     overflow: "hidden",
+    ...trackerShadow.card,
   },
   cardFlash: {
-    borderColor: "rgba(34, 197, 94, 0.45)",
+    borderColor: "rgba(16, 185, 129, 0.5)",
   },
   cardOffline: {
-    borderColor: "rgba(100, 116, 139, 0.45)",
+    borderColor: "rgba(138, 138, 150, 0.35)",
   },
   cardFailed: {
-    borderColor: "rgba(245, 158, 11, 0.45)",
+    borderColor: "rgba(245, 158, 11, 0.4)",
   },
   flashOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(34, 197, 94, 0.1)",
+    backgroundColor: "rgba(16, 185, 129, 0.1)",
   },
   iconArea: {
     width: 72,
@@ -316,8 +319,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   subtitle: {
-    fontSize: 14,
-    color: trackerColors.textSubtle,
+    fontSize: 13.5,
+    color: trackerColors.textMuted,
     textAlign: "center",
     lineHeight: 20,
     paddingHorizontal: 8,
@@ -325,28 +328,33 @@ const styles = StyleSheet.create({
   liveBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    marginTop: 4,
+    gap: 7,
+    paddingVertical: 6,
+    paddingHorizontal: 13,
+    borderRadius: trackerRadius.pill,
+    marginTop: 6,
+    borderWidth: 1,
   },
   badgeLive: {
-    backgroundColor: "rgba(34, 197, 94, 0.12)",
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    borderColor: "rgba(16, 185, 129, 0.28)",
   },
   badgeWaiting: {
     backgroundColor: "rgba(99, 102, 241, 0.12)",
+    borderColor: "rgba(99, 102, 241, 0.28)",
   },
   badgeOffline: {
-    backgroundColor: "rgba(100, 116, 139, 0.15)",
+    backgroundColor: "rgba(138, 138, 150, 0.14)",
+    borderColor: "rgba(138, 138, 150, 0.28)",
   },
   badgeFailed: {
     backgroundColor: "rgba(245, 158, 11, 0.12)",
+    borderColor: "rgba(245, 158, 11, 0.3)",
   },
   liveText: {
     fontSize: 10,
     fontWeight: "800",
-    letterSpacing: 1.2,
+    letterSpacing: 1.3,
   },
   badgeTextLive: {
     color: trackerColors.successLight,
@@ -358,7 +366,7 @@ const styles = StyleSheet.create({
     color: trackerColors.inactiveText,
   },
   badgeTextFailed: {
-    color: "#fbbf24",
+    color: trackerColors.warningLight,
   },
   dotsRow: {
     flexDirection: "row",
@@ -370,8 +378,8 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
 });

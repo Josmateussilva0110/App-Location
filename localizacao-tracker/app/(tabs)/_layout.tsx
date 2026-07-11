@@ -3,21 +3,17 @@ import React from 'react';
 import { Home } from 'lucide-react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
+import { trackerColors } from '@/constants/trackerTheme';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#818cf8',
-        tabBarInactiveTintColor: '#64748b',
+        tabBarActiveTintColor: trackerColors.primaryLight,
+        tabBarInactiveTintColor: trackerColors.textSubtle,
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarStyle: {
-          backgroundColor: '#0f0f23',
-          borderTopColor: '#1a1a3e',
-          borderTopWidth: 1,
-          paddingTop: 4,
-        },
+        tabBarStyle: { display: 'none' },
       }}>
       <Tabs.Screen
         name="index"
