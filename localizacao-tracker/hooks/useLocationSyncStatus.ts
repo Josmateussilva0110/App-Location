@@ -1,115 +1,53 @@
-import { useEffect, useRef, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import NetInfo from "@react-native-community/netinfo";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-import {
-  KEY_LAST_FAILURE,
-  KEY_LAST_SEND,
-  type LastFailureInfo,
-  type LastSendInfo,
-  type SyncStatus,
-} from "@/constants/location";
+import type { SyncStatus } from "@/constants/location";
+import * as syncStore from "@/services/syncStore";
 
-function calculateSyncStatus(
-  isConnected: boolean,
-  hasSent: boolean,
-  lastSend: LastSendInfo | null,
-  lastFailure: LastFailureInfo | null
-): SyncStatus {
-  if (!isConnected) return "offline";
+const RESET = {
+  hasSent: false,
+  justSent: false,
+  isConnected: true,
+  syncStatus: "waiting" as SyncStatus,
+};
 
-  const isFailureMoreRecent =
-    lastFailure &&
-    (!lastSend ||
-      new Date(lastFailure.timestamp) > new Date(lastSend.timestamp));
+/** Deriva o "acabou de enviar" (transiente de 2s) a partir do timestamp. */
+function useJustSent(timestamp: string | null) {
+  const [justSent, setJustSent] = useState(false);
+  const previous = useRef<string | null>(null);
 
-  if (isFailureMoreRecent) return "failed";
-  if (hasSent) return "live";
-  return "waiting";
+  useEffect(() => {
+    if (timestamp && previous.current && previous.current !== timestamp) {
+      previous.current = timestamp;
+      setJustSent(true);
+      const t = setTimeout(() => setJustSent(false), 2000);
+      return () => clearTimeout(t);
+    }
+    previous.current = timestamp;
+  }, [timestamp]);
+
+  return justSent;
 }
 
 export function useLocationSyncStatus(isTracking: boolean) {
-  const [hasSent, setHasSent] = useState(false);
-  const [justSent, setJustSent] = useState(false);
-  const [isConnected, setIsConnected] = useState(true);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>("waiting");
-  const lastTimestampRef = useRef<string | null>(null);
-  const isConnectedRef = useRef(true);
+  const snapshot = useSyncExternalStore(
+    syncStore.subscribe,
+    syncStore.getSnapshot,
+    syncStore.getSnapshot
+  );
+
+  const justSent = useJustSent(isTracking ? snapshot.lastSendTimestamp : null);
 
   useEffect(() => {
-    if (!isTracking) {
-      setHasSent(false);
-      setJustSent(false);
-      setIsConnected(true);
-      setSyncStatus("waiting");
-      lastTimestampRef.current = null;
-      isConnectedRef.current = true;
-      return;
-    }
-
-    function updateConnection(online: boolean) {
-      isConnectedRef.current = online;
-      setIsConnected(online);
-    }
-
-    async function readSyncState() {
-      const [rawSend, rawFailure] = await Promise.all([
-        AsyncStorage.getItem(KEY_LAST_SEND),
-        AsyncStorage.getItem(KEY_LAST_FAILURE),
-      ]);
-
-      const lastSend = rawSend ? (JSON.parse(rawSend) as LastSendInfo) : null;
-      const lastFailure = rawFailure
-        ? (JSON.parse(rawFailure) as LastFailureInfo)
-        : null;
-      const sent = lastSend !== null;
-
-      setHasSent(sent);
-      setSyncStatus(
-        calculateSyncStatus(
-          isConnectedRef.current,
-          sent,
-          lastSend,
-          lastFailure
-        )
-      );
-
-      if (
-        lastSend &&
-        lastTimestampRef.current &&
-        lastTimestampRef.current !== lastSend.timestamp
-      ) {
-        setJustSent(true);
-        setTimeout(() => setJustSent(false), 2000);
-      }
-
-      if (lastSend) {
-        lastTimestampRef.current = lastSend.timestamp;
-      }
-    }
-
-    NetInfo.fetch().then((state) => {
-      const online =
-        state.isConnected === true && state.isInternetReachable !== false;
-      updateConnection(online);
-      readSyncState();
-    });
-
-    const unsubscribeNet = NetInfo.addEventListener((state) => {
-      const online =
-        state.isConnected === true && state.isInternetReachable !== false;
-      updateConnection(online);
-      readSyncState();
-    });
-
-    readSyncState();
-    const interval = setInterval(readSyncState, 3000);
-
-    return () => {
-      unsubscribeNet();
-      clearInterval(interval);
-    };
+    syncStore.setActive(isTracking);
+    return () => syncStore.setActive(false);
   }, [isTracking]);
 
-  return { hasSent, justSent, isConnected, syncStatus };
+  if (!isTracking) return RESET;
+
+  return {
+    hasSent: snapshot.hasSent,
+    justSent,
+    isConnected: snapshot.isConnected,
+    syncStatus: snapshot.syncStatus,
+  };
 }

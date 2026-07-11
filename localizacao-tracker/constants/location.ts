@@ -1,6 +1,8 @@
 export const LOCATION_TASK_NAME = "background-location-task";
 export const SHEET_URL =
   "https://script.google.com/macros/s/AKfycbzx5lqWSkDIMma0MTcKX3FepplHVSr1hUxxeSQxnZoFKMrIw0h2wcCw3M6dtBzktmQr/exec";
+
+export const SYNC_TOKEN = "dbfkhdsfiriuysnakAHDKGEYhdgfewufrgutfajshdewyrgevfhsdgddfuguewytrgdhvfabksbdqowryegfsapfhdjsfmasskdjgwuetrqeweghs";
 export const KEY_LAST_LOCATION = "last_location";
 export const KEY_USER_NAME = "user_name";
 export const KEY_LAST_SEND = "last_send_info";

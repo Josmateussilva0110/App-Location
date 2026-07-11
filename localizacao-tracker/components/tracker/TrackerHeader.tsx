@@ -1,10 +1,7 @@
 import { View, Text, StyleSheet, Platform } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Navigation } from "lucide-react-native";
 
 import {
   trackerColors,
-  trackerGradients,
   trackerRadius,
   trackerShadow,
 } from "@/constants/trackerTheme";

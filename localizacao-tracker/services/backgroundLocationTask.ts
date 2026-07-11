@@ -6,7 +6,6 @@ import { sendLocationToSheet } from "@/services/locationSync";
 
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
   if (error) {
-    console.error("Location task error:", error);
     return;
   }
   if (!data) return;

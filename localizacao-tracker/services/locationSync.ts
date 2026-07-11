@@ -6,10 +6,12 @@ import {
   KEY_LAST_SEND,
   KEY_USER_NAME,
   SHEET_URL,
+  SYNC_TOKEN,
   type LastSendInfo,
 } from "@/constants/location";
 import { getCityState } from "@/services/reverseGeocode";
 import { getDeviceId } from "@/services/deviceId";
+import * as syncStore from "@/services/syncStore";
 
 const APP_NAME = Application.applicationName ?? "UnknownApp";
 const GEOCODE_MAX_WAIT_MS = 3000;
@@ -71,7 +73,6 @@ export async function sendLocationToSheet(
       last.longitude !== longitude;
 
     if (!hasChanged) {
-      console.log("Location unchanged, skipping send.");
       return { status: "ignored", error: "unchanged locally" };
     }
   }
@@ -90,15 +91,13 @@ export async function sendLocationToSheet(
       city,
       state,
       deviceId,
+      token: SYNC_TOKEN,
     });
 
     const url = `${SHEET_URL}?${params.toString()}`;
-    console.log("Sending to sheet:", url);
 
     const response = await fetch(url, { method: "GET" });
     const responseText = await response.text();
-
-    console.log("Google Sheets response:", response.status, responseText);
 
     const result = parseSheetResponse(responseText);
 
@@ -127,12 +126,11 @@ export async function sendLocationToSheet(
       JSON.stringify({ latitude, longitude })
     );
 
-    console.log("Location sync result:", result.status);
+    void syncStore.refresh();
     return result;
   } catch (err) {
     const error =
       err instanceof Error ? err.message : "Unknown error while sending";
-    console.error("Error sending location:", error);
     return { status: "error", error };
   }
 }
