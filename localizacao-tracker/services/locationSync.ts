@@ -9,6 +9,7 @@ import {
   type LastSendInfo,
 } from "@/constants/location";
 import { getCityState } from "@/services/reverseGeocode";
+import { getDeviceId } from "@/services/deviceId";
 
 const APP_NAME = Application.applicationName ?? "UnknownApp";
 const GEOCODE_MAX_WAIT_MS = 3000;
@@ -77,6 +78,7 @@ export async function sendLocationToSheet(
 
   try {
     const name = (await AsyncStorage.getItem(KEY_USER_NAME)) ?? "Unknown";
+    const deviceId = await getDeviceId();
     const { city, state } = await geocodeWithTimeout(latitude, longitude);
 
     const params = new URLSearchParams({
@@ -87,6 +89,7 @@ export async function sendLocationToSheet(
       name,
       city,
       state,
+      deviceId,
     });
 
     const url = `${SHEET_URL}?${params.toString()}`;
@@ -114,6 +117,7 @@ export async function sendLocationToSheet(
       longitude,
       city,
       state,
+      deviceId,
       totalSent: previousTotal + 1,
     };
 

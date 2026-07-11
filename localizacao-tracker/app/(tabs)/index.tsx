@@ -1,5 +1,5 @@
 import { Animated, ScrollView } from "react-native";
-
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CoordinatesCard } from "@/components/tracker/CoordinatesCard";
 import { LoadingScreen } from "@/components/tracker/LoadingScreen";
 import { NameSetupScreen } from "@/components/tracker/NameSetupScreen";
@@ -34,6 +34,7 @@ export default function App() {
     stopTracking,
   } = useLocationTracking();
 
+  const insets = useSafeAreaInsets();
   const sync = useLocationSyncStatus(isTracking);
   const pulseAnim = usePulseAnimation(isTracking);
   const fadeAnim = useFadeIn();
@@ -57,10 +58,15 @@ export default function App() {
   }
 
   return (
-    <Animated.View style={[trackerLayout.container, { opacity: fadeAnim }]}>
+    <Animated.View
+      style={[
+        trackerLayout.container,
+        { paddingTop: insets.top + 12, opacity: fadeAnim },
+      ]}
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24, flexGrow: 1 }}
       >
         <TrackerHeader userName={userName} />
 
