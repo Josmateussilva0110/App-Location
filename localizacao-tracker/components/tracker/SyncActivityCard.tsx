@@ -16,6 +16,7 @@ type SyncActivityCardProps = {
   hasSent: boolean;
   justSent: boolean;
   syncStatus: SyncStatus;
+  queueSize: number;
 };
 
 const STATUS_CONTENT: Record<
@@ -160,6 +161,7 @@ export function SyncActivityCard({
   hasSent,
   justSent,
   syncStatus,
+  queueSize,
 }: SyncActivityCardProps) {
   const flashOpacity = useRef(new Animated.Value(0)).current;
   const content = STATUS_CONTENT[syncStatus];
@@ -262,6 +264,16 @@ export function SyncActivityCard({
         )}
         <Text style={[styles.liveText, badgeTextStyle]}>{content.badge}</Text>
       </View>
+
+      {queueSize > 0 && (
+        <View style={styles.queueRow}>
+          <Text style={styles.queueText}>
+            {queueSize === 1
+              ? "1 ponto aguardando envio"
+              : `${queueSize} pontos aguardando envio`}
+          </Text>
+        </View>
+      )}
     </LinearGradient>
   );
 }
@@ -381,5 +393,13 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
+  },
+  queueRow: {
+    marginTop: 4,
+  },
+  queueText: {
+    fontSize: 12,
+    color: trackerColors.textMuted,
+    textAlign: "center",
   },
 });

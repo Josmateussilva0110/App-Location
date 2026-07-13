@@ -84,6 +84,7 @@ export default function App() {
             hasSent={sync.hasSent}
             justSent={sync.justSent}
             syncStatus={sync.syncStatus}
+            queueSize={sync.queueSize}
           />
         )}
 
