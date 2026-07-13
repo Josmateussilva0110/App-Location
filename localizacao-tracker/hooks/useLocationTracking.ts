@@ -3,6 +3,7 @@ import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
+  ACCURACY_MAX_M,
   KEY_LAST_FAILURE,
   KEY_LAST_LOCATION,
   KEY_LAST_SEND,
@@ -10,6 +11,7 @@ import {
 } from "@/constants/location";
 import { useToast } from "@/contexts/ToastContext";
 import { getCityState } from "@/services/reverseGeocode";
+import { getBestReading } from "@/services/locationReading";
 import { sendLocationToSheet } from "@/services/locationSync";
 import { useLocationPermissions } from "@/hooks/useLocationPermissions";
 
@@ -79,9 +81,28 @@ export function useLocationTracking() {
     if (!granted) return null;
 
     const loc = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
+      accuracy: Location.Accuracy.Highest,
     });
     return { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+  }
+
+  // Samples a few readings and keeps the most precise one (see getBestReading).
+  // Used before sending a point.
+  async function readBestCoordinates(): Promise<{
+    coords: Coords;
+    accuracy: number;
+  } | null> {
+    const granted = await ensureForeground();
+    dispatch({ type: "PERMISSION", granted });
+    if (!granted) return null;
+
+    const best = await getBestReading();
+    if (!best) return null;
+
+    return {
+      coords: { latitude: best.latitude, longitude: best.longitude },
+      accuracy: best.accuracy,
+    };
   }
 
   async function refreshCoordinates() {
@@ -137,53 +158,69 @@ export function useLocationTracking() {
       dispatch({ type: "PERMISSION", granted: true });
       dispatch({ type: "STATUS", message: "Obtendo localizacao..." });
 
-      const coords = await readCurrentCoordinates();
-      if (!coords) {
+      const best = await readBestCoordinates();
+      if (!best) {
         const msg = "Nao foi possivel obter a localizacao";
         dispatch({ type: "ERROR", message: msg });
         showToast(msg, "error");
         return;
       }
 
+      const { coords, accuracy } = best;
       dispatch({ type: "COORDS", coords });
       getCityState(coords.latitude, coords.longitude).then((address) =>
         dispatch({ type: "ADDRESS", address })
       );
 
-      dispatch({ type: "STATUS", message: "Enviando localizacao..." });
-
-      try {
-        const result = await sendLocationToSheet(
-          coords.latitude,
-          coords.longitude,
-          { force: true }
+      // Only send the initial point if the fix is precise enough. Otherwise
+      // start tracking anyway and let the background task send a better fix.
+      if (accuracy > ACCURACY_MAX_M) {
+        showToast(
+          `Sinal GPS impreciso (~${Math.round(
+            accuracy
+          )} m). O rastreamento vai iniciar e enviar quando o sinal melhorar.`,
+          "info"
         );
+      } else {
+        dispatch({ type: "STATUS", message: "Enviando localizacao..." });
 
-        if (result.status === "ok") {
-          showToast("Localizacao enviada com sucesso", "success");
-        } else if (result.status === "ignored") {
-          showToast("Posicao ja registrada", "info");
-        } else {
-          const msg = result.error ?? "Erro ao enviar para a planilha";
+        try {
+          const result = await sendLocationToSheet(
+            coords.latitude,
+            coords.longitude,
+            { force: true }
+          );
+
+          if (result.status === "ok") {
+            showToast("Localizacao enviada com sucesso", "success");
+          } else if (result.status === "ignored") {
+            showToast("Posicao ja registrada", "info");
+          } else {
+            const msg = result.error ?? "Erro ao enviar para a planilha";
+            dispatch({ type: "ERROR", message: msg });
+            showToast(msg, "error");
+            return;
+          }
+        } catch {
+          const msg = "Erro ao enviar para a planilha";
           dispatch({ type: "ERROR", message: msg });
           showToast(msg, "error");
           return;
         }
-      } catch {
-        const msg = "Erro ao enviar para a planilha";
-        dispatch({ type: "ERROR", message: msg });
-        showToast(msg, "error");
-        return;
       }
 
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-        accuracy: Location.Accuracy.Balanced,
-        timeInterval: 5 * 60 * 1000,
-        distanceInterval: 10,
+        accuracy: Location.Accuracy.BestForNavigation,
+        activityType: Location.ActivityType.AutomotiveNavigation,
+        pausesUpdatesAutomatically: false,
+        mayShowUserSettingsDialog: true,
+        timeInterval: 15 * 1000,
+        distanceInterval: 5,
         showsBackgroundLocationIndicator: true,
         foregroundService: {
           notificationTitle: "Rastreamento ativo",
           notificationBody: "Monitorando localizacao em segundo plano.",
+          killServiceOnDestroy: false,
         },
       });
 
