@@ -1,6 +1,6 @@
 export const LOCATION_TASK_NAME = "background-location-task";
 export const SHEET_URL =
-  "https://script.google.com/macros/s/AKfycbzx5lqWSkDIMma0MTcKX3FepplHVSr1hUxxeSQxnZoFKMrIw0h2wcCw3M6dtBzktmQr/exec";
+  "https://script.google.com/macros/s/AKfycbw2ITMv5PGFincaHN3fiyXi42x87x33Hz3QVEOGn8_bmHJjOZrIuGZuHvTmj8siEp5n5g/exec";
 
 export const SYNC_TOKEN = "dbfkhdsfiriuysnakAHDKGEYhdgfewufrgutfajshdewyrgevfhsdgddfuguewytrgdhvfabksbdqowryegfsapfhdjsfmasskdjgwuetrqeweghs";
 export const KEY_LAST_LOCATION = "last_location";
@@ -9,8 +9,13 @@ export const KEY_LAST_SEND = "last_send_info";
 export const KEY_LAST_FAILURE = "last_failure";
 export const KEY_DEVICE_ID = "device_id";
 
-/** Interval configured for background tracking (5 min) */
-export const TRACKING_INTERVAL_MS = 5 * 60 * 1000;
+/** Interval configured for background tracking (15 s) */
+export const TRACKING_INTERVAL_MS = 15 * 1000;
+
+/** Maximum acceptable GPS accuracy radius, in meters. Readings with a
+ * reported accuracy worse (larger) than this are considered too imprecise
+ * to register. Kept at 20 m because GPS accuracy degrades while moving. */
+export const ACCURACY_MAX_M = 20;
 
 export type LastSendInfo = {
   timestamp: string;

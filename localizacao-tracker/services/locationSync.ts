@@ -94,9 +94,11 @@ export async function sendLocationToSheet(
       token: SYNC_TOKEN,
     });
 
-    const url = `${SHEET_URL}?${params.toString()}`;
-
-    const response = await fetch(url, { method: "GET" });
+    const response = await fetch(SHEET_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
     const responseText = await response.text();
 
     const result = parseSheetResponse(responseText);
