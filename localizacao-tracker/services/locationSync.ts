@@ -5,12 +5,11 @@ import {
   KEY_LAST_LOCATION,
   KEY_LAST_SEND,
   KEY_USER_NAME,
-  SHEET_URL,
-  SYNC_TOKEN,
   type LastSendInfo,
 } from "@/constants/location";
 import { getCityState } from "@/services/reverseGeocode";
 import { getDeviceId } from "@/services/deviceId";
+import { getSheetUrl, getSyncToken } from "@/services/sheetConfig";
 import {
   enqueue,
   getQueue,
@@ -80,6 +79,11 @@ const PERMANENT_REASONS = new Set([
 // Sends a single point. Classifies the outcome so callers know whether a
 // failure is worth queueing for a later retry.
 async function transmit(point: QueuedPoint): Promise<TransmitResult> {
+  const [sheetUrl, syncToken] = await Promise.all([
+    getSheetUrl(),
+    getSyncToken(),
+  ]);
+
   const params = new URLSearchParams({
     latitude: String(point.latitude),
     longitude: String(point.longitude),
@@ -89,12 +93,12 @@ async function transmit(point: QueuedPoint): Promise<TransmitResult> {
     city: point.city,
     state: point.state,
     deviceId: point.deviceId,
-    token: SYNC_TOKEN,
+    token: syncToken,
   });
 
   let responseText: string;
   try {
-    const response = await fetch(SHEET_URL, {
+    const response = await fetch(sheetUrl, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: params.toString(),

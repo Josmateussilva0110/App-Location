@@ -1,8 +1,19 @@
 export const LOCATION_TASK_NAME = "background-location-task";
-export const SHEET_URL =
+
+export const DEFAULT_SHEET_URL =
   "https://script.google.com/macros/s/AKfycbw2ITMv5PGFincaHN3fiyXi42x87x33Hz3QVEOGn8_bmHJjOZrIuGZuHvTmj8siEp5n5g/exec";
 
-export const SYNC_TOKEN = "dbfkhdsfiriuysnakAHDKGEYhdgfewufrgutfajshdewyrgevfhsdgddfuguewytrgdhvfabksbdqowryegfsapfhdjsfmasskdjgwuetrqeweghs";
+export const DEFAULT_SYNC_TOKEN =
+  "dbfkhdsfiriuysnakAHDKGEYhdgfewufrgutfajshdewyrgevfhsdgddfuguewytrgdhvfabksbdqowryegfsapfhdjsfmasskdjgwuetrqeweghs";
+
+/** @deprecated Use DEFAULT_SHEET_URL or getSheetUrl() */
+export const SHEET_URL = DEFAULT_SHEET_URL;
+
+/** @deprecated Use DEFAULT_SYNC_TOKEN or getSyncToken() */
+export const SYNC_TOKEN = DEFAULT_SYNC_TOKEN;
+
+export const KEY_SHEET_URL = "sheet_url";
+export const KEY_SYNC_TOKEN = "sync_token";
 export const KEY_LAST_LOCATION = "last_location";
 export const KEY_USER_NAME = "user_name";
 export const KEY_LAST_SEND = "last_send_info";
