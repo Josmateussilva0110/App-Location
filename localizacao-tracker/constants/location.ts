@@ -1,13 +1,29 @@
 export const LOCATION_TASK_NAME = "background-location-task";
-export const SHEET_URL =
+
+export const DEFAULT_SHEET_URL =
   "https://script.google.com/macros/s/AKfycbw2ITMv5PGFincaHN3fiyXi42x87x33Hz3QVEOGn8_bmHJjOZrIuGZuHvTmj8siEp5n5g/exec";
 
-export const SYNC_TOKEN = "dbfkhdsfiriuysnakAHDKGEYhdgfewufrgutfajshdewyrgevfhsdgddfuguewytrgdhvfabksbdqowryegfsapfhdjsfmasskdjgwuetrqeweghs";
+export const DEFAULT_SYNC_TOKEN =
+  "dbfkhdsfiriuysnakAHDKGEYhdgfewufrgutfajshdewyrgevfhsdgddfuguewytrgdhvfabksbdqowryegfsapfhdjsfmasskdjgwuetrqeweghs";
+
+/** @deprecated Use DEFAULT_SHEET_URL or getSheetUrl() */
+export const SHEET_URL = DEFAULT_SHEET_URL;
+
+/** @deprecated Use DEFAULT_SYNC_TOKEN or getSyncToken() */
+export const SYNC_TOKEN = DEFAULT_SYNC_TOKEN;
+
+export const KEY_SHEET_URL = "sheet_url";
+export const KEY_SYNC_TOKEN = "sync_token";
 export const KEY_LAST_LOCATION = "last_location";
 export const KEY_USER_NAME = "user_name";
 export const KEY_LAST_SEND = "last_send_info";
 export const KEY_LAST_FAILURE = "last_failure";
 export const KEY_DEVICE_ID = "device_id";
+export const KEY_OFFLINE_QUEUE = "offline_queue";
+
+/** Maximum number of points kept in the offline queue. When exceeded, the
+ * oldest points are dropped to avoid unbounded storage growth. */
+export const QUEUE_MAX_SIZE = 2000;
 
 /** Interval configured for background tracking (15 s) */
 export const TRACKING_INTERVAL_MS = 15 * 1000;

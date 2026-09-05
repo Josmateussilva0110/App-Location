@@ -33,6 +33,16 @@ export default function RootLayout() {
         <ThemeProvider value={navTheme}>
           <Stack screenOptions={{ contentStyle: { backgroundColor: trackerColors.background } }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="settings"
+              options={{
+                title: "Configurações",
+                headerShown: true,
+                headerStyle: { backgroundColor: trackerColors.background },
+                headerTintColor: trackerColors.text,
+                headerTitleStyle: { fontWeight: "700" },
+              }}
+            />
           </Stack>
           <StatusBar style="light" />
           <ToastContainer />

@@ -40,9 +40,16 @@ trap save_android_cache EXIT
 restore_android_cache
 
 # ----------------------------------------------------------------
-# 1. Expo Prebuild (somente quando necessário)
+# 1. Dependências Node (volume montado pode ter node_modules inválido)
 # ----------------------------------------------------------------
 cd "$APP_DIR"
+
+echo "📦 Instalando dependências (npm ci)..."
+npm ci --ignore-scripts
+
+# ----------------------------------------------------------------
+# 2. Expo Prebuild (somente quando necessário)
+# ----------------------------------------------------------------
 
 CONFIG_HASH=$(
   cat "$APP_DIR/app.json" \
@@ -89,7 +96,7 @@ mkdir -p android
 echo "sdk.dir=${ANDROID_HOME}" > android/local.properties
 
 # ----------------------------------------------------------------
-# 2. Otimizações do Gradle
+# 3. Otimizações do Gradle
 # ----------------------------------------------------------------
 GRADLE_PROPS="android/gradle.properties"
 touch "$GRADLE_PROPS"
@@ -108,7 +115,7 @@ append_gradle_prop "org.gradle.configureondemand" "true"
 append_gradle_prop "org.gradle.jvmargs" "-Xmx4096m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError"
 
 # ----------------------------------------------------------------
-# 3. Gradle Build (compila o APK)
+# 4. Gradle Build (compila o APK)
 # ----------------------------------------------------------------
 echo ""
 echo "🏗️  Compilando APK..."
@@ -122,7 +129,7 @@ chmod +x ./gradlew
   -x test
 
 # ----------------------------------------------------------------
-# 4. Copiar APK para diretório de output
+# 5. Copiar APK para diretório de output
 # ----------------------------------------------------------------
 echo ""
 echo "📋 Copiando APK..."

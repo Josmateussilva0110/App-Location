@@ -8,6 +8,7 @@ const RESET = {
   justSent: false,
   isConnected: true,
   syncStatus: "waiting" as SyncStatus,
+  queueSize: 0,
 };
 
 /** Deriva o "acabou de enviar" (transiente de 2s) a partir do timestamp. */
@@ -49,5 +50,6 @@ export function useLocationSyncStatus(isTracking: boolean) {
     justSent,
     isConnected: snapshot.isConnected,
     syncStatus: snapshot.syncStatus,
+    queueSize: snapshot.queueSize,
   };
 }

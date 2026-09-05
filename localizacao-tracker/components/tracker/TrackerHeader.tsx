@@ -1,4 +1,6 @@
-import { View, Text, StyleSheet, Platform } from "react-native";
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
+import { Settings } from "lucide-react-native";
 
 import {
   trackerColors,
@@ -12,6 +14,8 @@ type TrackerHeaderProps = {
 };
 
 export function TrackerHeader({ userName, deviceId }: TrackerHeaderProps) {
+  const router = useRouter();
+
   return (
     <View style={styles.header}>
       <View style={styles.textGroup}>
@@ -28,6 +32,15 @@ export function TrackerHeader({ userName, deviceId }: TrackerHeaderProps) {
           </Text>
         ) : null}
       </View>
+
+      <TouchableOpacity
+        style={styles.settingsButton}
+        onPress={() => router.push("/settings")}
+        activeOpacity={0.7}
+        accessibilityLabel="Configurações"
+      >
+        <Settings size={20} color={trackerColors.textMuted} strokeWidth={2.2} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -38,6 +51,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 14,
     marginBottom: 28,
+  },
+  settingsButton: {
+    width: 42,
+    height: 42,
+    borderRadius: trackerRadius.sm,
+    borderWidth: 1,
+    borderColor: trackerColors.border,
+    backgroundColor: trackerColors.card,
+    justifyContent: "center",
+    alignItems: "center",
   },
   iconBadge: {
     width: 50,

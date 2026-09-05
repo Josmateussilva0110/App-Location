@@ -9,12 +9,14 @@ import {
   type LastSendInfo,
   type SyncStatus,
 } from "@/constants/location";
+import { getQueueSize } from "@/services/offlineQueue";
 
 export type SyncSnapshot = {
   isConnected: boolean;
   hasSent: boolean;
   syncStatus: SyncStatus;
   lastSendTimestamp: string | null;
+  queueSize: number;
 };
 
 const POLL_INTERVAL_MS = 5000;
@@ -40,6 +42,7 @@ let snapshot: SyncSnapshot = {
   hasSent: false,
   syncStatus: "waiting",
   lastSendTimestamp: null,
+  queueSize: 0,
 };
 
 let isConnected = true;
@@ -58,7 +61,8 @@ function setSnapshot(next: SyncSnapshot) {
     next.isConnected === snapshot.isConnected &&
     next.hasSent === snapshot.hasSent &&
     next.syncStatus === snapshot.syncStatus &&
-    next.lastSendTimestamp === snapshot.lastSendTimestamp
+    next.lastSendTimestamp === snapshot.lastSendTimestamp &&
+    next.queueSize === snapshot.queueSize
   ) {
     return;
   }
@@ -67,9 +71,10 @@ function setSnapshot(next: SyncSnapshot) {
 }
 
 export async function refresh() {
-  const [rawSend, rawFailure] = await Promise.all([
+  const [rawSend, rawFailure, queueSize] = await Promise.all([
     AsyncStorage.getItem(KEY_LAST_SEND),
     AsyncStorage.getItem(KEY_LAST_FAILURE),
+    getQueueSize(),
   ]);
   const lastSend = rawSend ? (JSON.parse(rawSend) as LastSendInfo) : null;
   const lastFailure = rawFailure
@@ -82,6 +87,7 @@ export async function refresh() {
     hasSent,
     syncStatus: computeStatus(isConnected, hasSent, lastSend, lastFailure),
     lastSendTimestamp: lastSend?.timestamp ?? null,
+    queueSize,
   });
 }
 
